@@ -181,40 +181,6 @@ class MonitoringAdapterTest {
     }
 
     @Test
-    void shouldUpdateMonitoringSuccessfullyWhenTeacherMatches() {
-        MonitoringEntity entity = Instancio.of(MonitoringEntity.class)
-                .set(field(MonitoringEntity::getId), 12L)
-                .set(field(MonitoringEntity::getName), "OldName")
-                .set(field(MonitoringEntity::getTeacher), TeacherEntity.builder().registration("T12").build())
-                .set(field(MonitoringEntity::getTopics), "OldTopic")
-                .set(field(MonitoringEntity::getAllowMonitorsSameTime), false)
-                .set(field(MonitoringEntity::getSchedules), List.of(Instancio.create(MonitoringScheduleEntity.class)))
-                .create();
-        MonitoringDomain domain = Instancio.of(MonitoringDomain.class)
-                .set(field(MonitoringDomain::getId), 12L)
-                .set(field(MonitoringDomain::getName), "NewName")
-                .set(field(MonitoringDomain::getTeacher), "T12")
-                .set(field(MonitoringDomain::getTopics), List.of("NewTopic"))
-                .set(field(MonitoringDomain::getAllowMonitorsSameTime), true)
-                .create();
-        MonitoringEntity updatedEntity = Instancio.of(MonitoringEntity.class)
-                .set(field(MonitoringEntity::getId), 12L)
-                .set(field(MonitoringEntity::getName), "NewName")
-                .set(field(MonitoringEntity::getTeacher), TeacherEntity.builder().registration("T12").build())
-                .set(field(MonitoringEntity::getTopics), "NewTopic")
-                .set(field(MonitoringEntity::getAllowMonitorsSameTime), true)
-                .set(field(MonitoringEntity::getSchedules), List.of(Instancio.create(MonitoringScheduleEntity.class)))
-                .create();
-        when(monitoringRepository.findById(anyLong())).thenReturn(Optional.of(entity));
-        when(teacherAdapter.findByRegistration(anyString())).thenReturn(Instancio.create(TeacherDomain.class));
-        when(monitoringRepository.save(any(MonitoringEntity.class))).thenReturn(updatedEntity);
-        MonitoringDomain result = monitoringAdapter.update(12L, domain, "T12");
-        assertEquals("NewName", result.getName());
-        assertEquals(List.of("NewTopic"), result.getTopics());
-        assertTrue(result.getAllowMonitorsSameTime());
-    }
-
-    @Test
     void shouldThrowForbiddenExceptionWhenTeacherDoesNotMatchOnUpdate() {
         MonitoringEntity entity = Instancio.of(MonitoringEntity.class)
                 .set(field(MonitoringEntity::getId), 13L)

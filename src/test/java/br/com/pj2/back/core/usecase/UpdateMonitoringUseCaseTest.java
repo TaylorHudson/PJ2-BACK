@@ -30,20 +30,32 @@ class UpdateMonitoringUseCaseTest {
         var id = 1L;
         var authHeader = "Bearer token";
         var registration = "teacherRegistration";
+
         var request = mock(MonitoringUpdateRequest.class);
         var updatedMonitoring = mock(MonitoringDomain.class);
 
-        when(tokenGateway.extractSubjectFromAuthorization(authHeader)).thenReturn(registration);
+        when(tokenGateway.extractSubjectFromAuthorization(authHeader))
+                .thenReturn(registration);
+
         when(request.getName()).thenReturn("Math");
         when(request.getAllowMonitorsSameTime()).thenReturn(true);
-        when(request.getTeacher()).thenReturn(registration);
         when(request.getTopics()).thenReturn(List.of("Algebra", "Geometry"));
-        when(monitoringGateway.update(eq(id), any(MonitoringDomain.class), eq(registration))).thenReturn(updatedMonitoring);
+
+        when(monitoringGateway.update(
+                eq(id),
+                any(MonitoringDomain.class),
+                eq(registration)
+        )).thenReturn(updatedMonitoring);
 
         var result = updateMonitoringUseCase.execute(id, request, authHeader);
 
         assertEquals(updatedMonitoring, result);
-        verify(monitoringGateway, times(1)).update(eq(id), any(MonitoringDomain.class), eq(registration));
+
+        verify(monitoringGateway).update(
+                eq(id),
+                any(MonitoringDomain.class),
+                eq(registration)
+        );
     }
 
     @Test
@@ -51,22 +63,27 @@ class UpdateMonitoringUseCaseTest {
         var id = 2L;
         var authHeader = "Bearer token";
         var registration = "teacherRegistration";
+
         var request = mock(MonitoringUpdateRequest.class);
 
-        when(tokenGateway.extractSubjectFromAuthorization(authHeader)).thenReturn(registration);
+        when(tokenGateway.extractSubjectFromAuthorization(authHeader))
+                .thenReturn(registration);
+
         when(request.getName()).thenReturn("Physics");
         when(request.getAllowMonitorsSameTime()).thenReturn(false);
-        when(request.getTeacher()).thenReturn(registration);
         when(request.getTopics()).thenReturn(List.of("Mechanics"));
 
         updateMonitoringUseCase.execute(id, request, authHeader);
 
-        verify(monitoringGateway).update(eq(id), argThat(domain ->
-                domain.getName().equals("Physics") &&
-                !domain.getAllowMonitorsSameTime() &&
-                domain.getTeacher().equals(registration) &&
-                domain.getTopics().equals(List.of("Mechanics"))
-        ), eq(registration));
+        verify(monitoringGateway).update(
+                eq(id),
+                argThat(domain ->
+                        domain.getName().equals("Physics")
+                                && !domain.getAllowMonitorsSameTime()
+                                && domain.getTopics().equals(List.of("Mechanics"))
+                ),
+                eq(registration)
+        );
     }
 
     @Test
@@ -74,21 +91,26 @@ class UpdateMonitoringUseCaseTest {
         var id = 3L;
         var authHeader = "Bearer token";
         var registration = "teacherRegistration";
+
         var request = mock(MonitoringUpdateRequest.class);
 
-        when(tokenGateway.extractSubjectFromAuthorization(authHeader)).thenReturn(registration);
+        when(tokenGateway.extractSubjectFromAuthorization(authHeader))
+                .thenReturn(registration);
+
         when(request.getName()).thenReturn("Chemistry");
         when(request.getAllowMonitorsSameTime()).thenReturn(true);
-        when(request.getTeacher()).thenReturn(registration);
         when(request.getTopics()).thenReturn(null);
 
         updateMonitoringUseCase.execute(id, request, authHeader);
 
-        verify(monitoringGateway).update(eq(id), argThat(domain ->
-                domain.getName().equals("Chemistry") &&
-                domain.getAllowMonitorsSameTime() &&
-                domain.getTeacher().equals(registration) &&
-                domain.getTopics() == null
-        ), eq(registration));
+        verify(monitoringGateway).update(
+                eq(id),
+                argThat(domain ->
+                        domain.getName().equals("Chemistry")
+                                && domain.getAllowMonitorsSameTime()
+                                && domain.getTopics() == null
+                ),
+                eq(registration)
+        );
     }
 }

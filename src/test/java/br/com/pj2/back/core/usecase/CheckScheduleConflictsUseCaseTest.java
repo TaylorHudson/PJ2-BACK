@@ -22,15 +22,20 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CheckScheduleConflictsUseCaseTest {
+
     @Mock
     private MonitoringScheduleGateway scheduleGateway;
+
     @Mock
     private MonitoringGateway monitoringGateway;
+
     @InjectMocks
     private CheckScheduleConflictsUseCase checkScheduleConflictsUseCase;
 
     private MonitoringScheduleRequest request;
     private MonitoringDomain monitoringDomain;
+
+    private static final String REGISTRATION = "123456";
 
     @BeforeEach
     void setUp() {
@@ -41,39 +46,82 @@ class CheckScheduleConflictsUseCaseTest {
         request.setMonitoring("EDA");
 
         monitoringDomain = MonitoringDomain.builder()
+                .id(1L)
                 .allowMonitorsSameTime(false)
                 .build();
     }
 
     @Test
     void shouldPassWhenNoConflictExists() {
-        when(monitoringGateway.findByName(request.getMonitoring())).thenReturn(monitoringDomain);
-        when(scheduleGateway.existsByDayOfWeekAndTimeRangeAndStatusIn(any(), any(), any(), any(), any())).thenReturn(false);
+        when(monitoringGateway.findByName(request.getMonitoring()))
+                .thenReturn(monitoringDomain);
 
-        assertDoesNotThrow(() -> checkScheduleConflictsUseCase.execute(request));
+        when(scheduleGateway.existsByDayOfWeekAndTimeRangeAndStatusIn(
+                any(), any(), any(), any(), any()))
+                .thenReturn(false);
+
+        assertDoesNotThrow(() ->
+                checkScheduleConflictsUseCase.execute(request, REGISTRATION));
     }
 
     @Test
-    void shouldThrowConflictExceptionWhenConflictExists() {
-        when(monitoringGateway.findByName(request.getMonitoring())).thenReturn(monitoringDomain);
-        when(scheduleGateway.existsByDayOfWeekAndTimeRangeAndStatusIn(any(), any(), any(), any(), any())).thenReturn(true);
+    void shouldThrowConflictExceptionWhenGeneralConflictExists() {
+        when(monitoringGateway.findByName(request.getMonitoring()))
+                .thenReturn(monitoringDomain);
 
-        assertThrows(ConflictException.class, () -> checkScheduleConflictsUseCase.execute(request));
+        when(scheduleGateway.existsByDayOfWeekAndTimeRangeAndStatusIn(
+                any(), any(), any(), any(), any()))
+                .thenReturn(true);
+
+        assertThrows(
+                ConflictException.class,
+                () -> checkScheduleConflictsUseCase.execute(request, REGISTRATION)
+        );
     }
 
     @Test
-    void shouldPassWhenMonitoringAllowsMonitorsSameTime() {
+    void shouldPassWhenMonitoringAllowsMonitorsSameTimeAndNoConflictExists() {
         monitoringDomain.setAllowMonitorsSameTime(true);
-        when(monitoringGateway.findByName(request.getMonitoring())).thenReturn(monitoringDomain);
 
-        assertDoesNotThrow(() -> checkScheduleConflictsUseCase.execute(request));
-        verifyNoInteractions(scheduleGateway);
+        when(monitoringGateway.findByName(request.getMonitoring()))
+                .thenReturn(monitoringDomain);
+
+        when(scheduleGateway.existsByDayOfWeekAndTimeRangeAndStatusInAndMonitor(
+                any(), any(), any(), any(), any(), any()))
+                .thenReturn(false);
+
+        when(scheduleGateway.existsByDayOfWeekAndTimeRangeAndStatusIn(
+                any(), any(), any(), any(), any()))
+                .thenReturn(false);
+
+        assertDoesNotThrow(() ->
+                checkScheduleConflictsUseCase.execute(request, REGISTRATION));
+    }
+
+    @Test
+    void shouldThrowConflictExceptionWhenMonitorConflictExists() {
+        monitoringDomain.setAllowMonitorsSameTime(true);
+
+        when(monitoringGateway.findByName(request.getMonitoring()))
+                .thenReturn(monitoringDomain);
+
+        when(scheduleGateway.existsByDayOfWeekAndTimeRangeAndStatusInAndMonitor(
+                any(), any(), any(), any(), any(), any()))
+                .thenReturn(true);
+
+        assertThrows(
+                ConflictException.class,
+                () -> checkScheduleConflictsUseCase.execute(request, REGISTRATION)
+        );
     }
 
     @Test
     void shouldThrowBindExceptionForInvalidDayOfWeek() {
         request.setDayOfWeek("INVALID_DAY");
 
-        assertThrows(BindException.class, () -> checkScheduleConflictsUseCase.execute(request));
+        assertThrows(
+                BindException.class,
+                () -> checkScheduleConflictsUseCase.execute(request, REGISTRATION)
+        );
     }
 }

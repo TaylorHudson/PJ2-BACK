@@ -1,6 +1,8 @@
 package br.com.pj2.back.entrypoint.api.controller;
 
+import br.com.pj2.back.core.domain.MonitoringDomain;
 import br.com.pj2.back.core.domain.MonitoringScheduleDomain;
+import br.com.pj2.back.core.gateway.MonitoringGateway;
 import br.com.pj2.back.core.gateway.MonitoringScheduleGateway;
 import br.com.pj2.back.core.gateway.TokenGateway;
 import br.com.pj2.back.core.usecase.ApproveMonitoringScheduleUseCase;
@@ -25,7 +27,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.List;
 
 import static org.instancio.Select.field;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -46,6 +47,8 @@ class MonitoringScheduleControllerTest {
     private TokenGateway tokenGateway;
     @Mock
     private MonitoringScheduleGateway scheduleGateway;
+    @Mock
+    private MonitoringGateway monitoringGateway;
     @Mock
     private CheckScheduleConflictsUseCase checkScheduleConflictsUseCase;
     @InjectMocks
@@ -133,34 +136,30 @@ class MonitoringScheduleControllerTest {
     }
 
     @Test
-    void shouldReturnStudentSchedulesByDate() throws Exception {
+    void shouldReturnStudentSchedules() throws Exception {
         var scheduleDomain = Instancio.of(MonitoringScheduleDomain.class)
                 .set(field(MonitoringScheduleDomain::getId), 5L)
+                .set(field(MonitoringScheduleDomain::getMonitoring), "EDA")
                 .create();
-        when(tokenGateway.extractSubjectFromAuthorization(anyString())).thenReturn("202300123456");
-        when(scheduleGateway.findByMonitorRegistrationAndDayOfWeek(anyString(), any())).thenReturn(List.of(scheduleDomain));
+
+        var monitoring = MonitoringDomain.builder()
+                .topics(List.of("Árvores", "Grafos"))
+                .build();
+
+        when(tokenGateway.extractSubjectFromAuthorization(anyString()))
+                .thenReturn("202300123456");
+
+        when(scheduleGateway.findByMonitorRegistration("202300123456"))
+                .thenReturn(List.of(scheduleDomain));
+
+        when(monitoringGateway.findByName("EDA"))
+                .thenReturn(monitoring);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/monitoring/schedules/students/me")
-                        .param("date", "2024-06-01")
                         .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(5));
-    }
-
-    @Test
-    void shouldReturnStudentSchedulesByDateWhenDateIsNotProvided() throws Exception {
-        var scheduleDomain = Instancio.of(MonitoringScheduleDomain.class)
-                .set(field(MonitoringScheduleDomain::getId), 6L)
-                .create();
-        when(tokenGateway.extractSubjectFromAuthorization(anyString())).thenReturn("202300123456");
-        when(scheduleGateway.findByMonitorRegistrationAndDayOfWeek(anyString(), any())).thenReturn(List.of(scheduleDomain));
-
-        mockMvc.perform(MockMvcRequestBuilders
-                        .get("/monitoring/schedules/students/me")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(6));
     }
 
     @Test

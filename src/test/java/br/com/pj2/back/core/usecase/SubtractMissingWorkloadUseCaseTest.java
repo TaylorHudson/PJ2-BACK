@@ -30,8 +30,10 @@ class SubtractMissingWorkloadUseCaseTest {
 
         when(schedule.getStartTime()).thenReturn(LocalTime.of(10, 0));
         when(schedule.getEndTime()).thenReturn(LocalTime.of(12, 0));
-        when(schedule.getMonitor()).thenReturn("student123");
-        when(studentGateway.findByRegistration("student123")).thenReturn(student);
+        when(schedule.getMonitorRegistration()).thenReturn("student123");
+
+        when(studentGateway.findByRegistration("student123"))
+                .thenReturn(student);
 
         subtractMissingWorkloadUseCase.execute(schedule);
 
@@ -45,10 +47,20 @@ class SubtractMissingWorkloadUseCaseTest {
 
         when(schedule.getStartTime()).thenReturn(LocalTime.of(10, 0));
         when(schedule.getEndTime()).thenReturn(LocalTime.of(12, 0));
-        when(schedule.getMonitor()).thenReturn("student123");
-        when(studentGateway.findByRegistration("student123")).thenThrow(new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+        when(schedule.getMonitorRegistration()).thenReturn("student123");
 
-        assertThrows(ResourceNotFoundException.class, () -> subtractMissingWorkloadUseCase.execute(schedule));
+        when(studentGateway.findByRegistration("student123"))
+                .thenThrow(
+                        new ResourceNotFoundException(
+                                ErrorCode.USER_NOT_FOUND
+                        )
+                );
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> subtractMissingWorkloadUseCase.execute(schedule)
+        );
+
         verify(studentGateway, never()).save(any());
     }
 
@@ -59,8 +71,10 @@ class SubtractMissingWorkloadUseCaseTest {
 
         when(schedule.getStartTime()).thenReturn(LocalTime.of(10, 0));
         when(schedule.getEndTime()).thenReturn(LocalTime.of(10, 0));
-        when(schedule.getMonitor()).thenReturn("student123");
-        when(studentGateway.findByRegistration("student123")).thenReturn(student);
+        when(schedule.getMonitorRegistration()).thenReturn("student123");
+
+        when(studentGateway.findByRegistration("student123"))
+                .thenReturn(student);
 
         subtractMissingWorkloadUseCase.execute(schedule);
 

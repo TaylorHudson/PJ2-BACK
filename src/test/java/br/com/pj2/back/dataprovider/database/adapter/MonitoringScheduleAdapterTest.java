@@ -28,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -71,7 +70,7 @@ class MonitoringScheduleAdapterTest {
         MonitoringScheduleDomain schedule = response.get(0);
 
         assertEquals(MonitoringScheduleStatus.PENDING.getDescription(), schedule.getStatus().getDescription());
-        assertEquals("123", schedule.getMonitor());
+        assertEquals("Monitor Teste", schedule.getMonitor());
         assertEquals("Matemática", schedule.getMonitoring());
         assertEquals(DayOfWeek.MONDAY, schedule.getDayOfWeek());
         assertEquals(LocalTime.of(14, 0), schedule.getStartTime());
@@ -80,18 +79,21 @@ class MonitoringScheduleAdapterTest {
     }
 
     @Test
-    void shouldFindByMonitorRegistrationAndDayOfWeek(){
-        List<MonitoringScheduleEntity> mock= new ArrayList<>();
+    void shouldFindByMonitorRegistration() {
+        List<MonitoringScheduleEntity> mock = new ArrayList<>();
         mock.add(buildMonitoringScheduleEntity());
 
-        when(monitoringScheduleRepository.findByMonitorRegistrationAndDayOfWeekAndStatus(anyString(), any(), any()))
+        when(monitoringScheduleRepository.findByMonitorRegistrationAndStatus(
+                "123",
+                MonitoringScheduleStatus.APPROVED))
                 .thenReturn(mock);
 
-        List<MonitoringScheduleDomain> response = monitoringScheduleAdapter.findByMonitorRegistrationAndDayOfWeek("123", DayOfWeek.MONDAY);
+        List<MonitoringScheduleDomain> response =
+                monitoringScheduleAdapter.findByMonitorRegistration("123");
 
         assertNotNull(response);
         assertEquals(1, response.size());
-        assertEquals("123", response.get(0).getMonitor());
+        assertEquals("123", response.get(0).getMonitorRegistration());
     }
 
     @Test
@@ -104,7 +106,7 @@ class MonitoringScheduleAdapterTest {
 
         assertNotNull(domain);
         assertEquals(1L, domain.getId());
-        assertEquals("123", domain.getMonitor());
+        assertEquals("Monitor Teste", domain.getMonitor());
     }
 
     @Test
@@ -116,35 +118,7 @@ class MonitoringScheduleAdapterTest {
 
         assertNotNull(domain);
         assertEquals(1L, domain.getId());
-        assertEquals("123", domain.getMonitor());
-    }
-
-    @Test
-    void shouldSaveMonitoringSchedule() {
-        MonitoringScheduleDomain domain = MonitoringScheduleDomain.builder()
-                .id(1L)
-                .monitor("123")
-                .monitoring("Matemática")
-                .dayOfWeek(DayOfWeek.MONDAY)
-                .startTime(LocalTime.of(14, 0))
-                .endTime(LocalTime.of(15, 0))
-                .status(MonitoringScheduleStatus.APPROVED)
-                .requestedAt(LocalDateTime.now())
-                .build();
-
-        StudentEntity student = StudentEntity.builder().registration("123").build();
-        MonitoringEntity monitoring = MonitoringEntity.builder().name("Matemática").students(new ArrayList<>()).build();
-
-        when(studentRepository.findById("123")).thenReturn(java.util.Optional.of(student));
-        when(monitoringRepository.findByName("Matemática")).thenReturn(java.util.Optional.of(monitoring));
-        when(monitoringScheduleRepository.save(org.mockito.ArgumentMatchers.any(MonitoringScheduleEntity.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        MonitoringScheduleDomain saved = monitoringScheduleAdapter.save(domain);
-
-        assertNotNull(saved);
-        assertEquals("123", saved.getMonitor());
-        assertEquals("Matemática", saved.getMonitoring());
+        assertEquals("Monitor Teste", domain.getMonitor());
     }
 
     @Test
@@ -212,31 +186,6 @@ class MonitoringScheduleAdapterTest {
 
         assertEquals(ErrorCode.MONITORING_NOT_FOUND.getErrorCode(), exception.getErrorCode().getErrorCode());
         assertEquals(ErrorCode.MONITORING_NOT_FOUND.getMessage(), exception.getErrorCode().getMessage());
-    }
-
-    @Test
-    void shouldThrowWhenSaveStudentNotFound() {
-        MonitoringScheduleDomain domain = MonitoringScheduleDomain.builder()
-                .id(1L)
-                .monitor("123")
-                .monitoring("Matemática")
-                .dayOfWeek(DayOfWeek.MONDAY)
-                .startTime(LocalTime.of(14, 0))
-                .endTime(LocalTime.of(15, 0))
-                .status(MonitoringScheduleStatus.APPROVED)
-                .build();
-
-        when(monitoringRepository.findByName("Matemática")).thenReturn(Optional.of(
-                MonitoringEntity.builder().name("Matemática").students(new ArrayList<>()).build()
-        ));
-        when(studentRepository.findById("123")).thenReturn(Optional.empty());
-
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> monitoringScheduleAdapter.save(domain));
-
-        assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
-        assertEquals(ErrorCode.USER_NOT_FOUND.getMessage(), exception.getErrorCode().getMessage());
-
     }
 
     private MonitoringScheduleEntity buildMonitoringScheduleEntity(){

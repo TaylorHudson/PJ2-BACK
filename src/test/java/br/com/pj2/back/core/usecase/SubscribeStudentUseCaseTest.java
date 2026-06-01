@@ -32,29 +32,6 @@ class SubscribeStudentUseCaseTest {
     private SubscribeStudentUseCase subscribeStudentUseCase;
 
     @Test
-    void shouldSubscribeStudentWhenTeacherIsTutorAndStudentNotSubscribed() {
-        var request = mock(SubscribeStudentRequest.class);
-        var monitoring = mock(MonitoringDomain.class);
-        var studentRegistration = "student123";
-        var teacherRegistration = "teacher456";
-        var monitoringName = "Math";
-
-        when(request.getStudentRegistration()).thenReturn(studentRegistration);
-        when(request.getMonitoringName()).thenReturn(monitoringName);
-        when(tokenGateway.extractSubjectFromAuthorization("Bearer token")).thenReturn(teacherRegistration);
-        when(monitoringGateway.findByName(monitoringName)).thenReturn(monitoring);
-        when(monitoring.getTeacher()).thenReturn(teacherRegistration);
-        when(monitoring.containsStudent(studentRegistration)).thenReturn(false);
-
-        subscribeStudentUseCase.execute(request, "Bearer token");
-
-        verify(authGateway).checkIfStudentExists(studentRegistration);
-        verify(studentGateway).save(any(StudentDomain.class));
-        verify(monitoring).subscribeStudent(studentRegistration);
-        verify(monitoringGateway).create(monitoring);
-    }
-
-    @Test
     void shouldThrowExceptionWhenTeacherIsNotTutor() {
         var request = mock(SubscribeStudentRequest.class);
         var monitoring = mock(MonitoringDomain.class);

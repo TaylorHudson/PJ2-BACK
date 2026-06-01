@@ -36,9 +36,14 @@ class FinishMonitoringSessionUseCaseTest {
         var schedule = mock(MonitoringScheduleDomain.class);
         var session = mock(MonitoringSessionDomain.class);
 
-        when(scheduleGateway.findByIdAndMonitorRegistration(scheduleId, registration)).thenReturn(schedule);
-        when(schedule.getMonitor()).thenReturn(registration);
-        when(sessionGateway.findByMonitorAndIsStartedTrue(registration)).thenReturn(session);
+        when(scheduleGateway.findByIdAndMonitorRegistration(scheduleId, registration))
+                .thenReturn(schedule);
+
+        when(schedule.getMonitorRegistration())
+                .thenReturn(registration);
+
+        when(sessionGateway.findByMonitorAndIsStartedTrue(registration))
+                .thenReturn(session);
 
         finishMonitoringSessionUseCase.execute(scheduleId, topics, registration);
 
@@ -54,10 +59,22 @@ class FinishMonitoringSessionUseCaseTest {
 
         var schedule = mock(MonitoringScheduleDomain.class);
 
-        when(scheduleGateway.findByIdAndMonitorRegistration(scheduleId, registration)).thenReturn(schedule);
-        when(schedule.getMonitor()).thenReturn(registration);
-        when(sessionGateway.findByMonitorAndIsStartedTrue(registration)).thenThrow(new ResourceNotFoundException(ErrorCode.NO_STARTED_MONITORING_SESSION_WAS_FOUND));
+        when(scheduleGateway.findByIdAndMonitorRegistration(scheduleId, registration))
+                .thenReturn(schedule);
 
-        assertThrows(ConflictException.class, () -> finishMonitoringSessionUseCase.execute(scheduleId, topics, registration));
+        when(schedule.getMonitorRegistration())
+                .thenReturn(registration);
+
+        when(sessionGateway.findByMonitorAndIsStartedTrue(registration))
+                .thenThrow(
+                        new ResourceNotFoundException(
+                                ErrorCode.NO_STARTED_MONITORING_SESSION_WAS_FOUND
+                        )
+                );
+
+        assertThrows(
+                ConflictException.class,
+                () -> finishMonitoringSessionUseCase.execute(scheduleId, topics, registration)
+        );
     }
 }
