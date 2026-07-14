@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -163,4 +165,50 @@ class MonitoringSessionAdapterTest {
                 .isStarted(true)
                 .build();
     }
+
+    @Test
+    void shouldReturnWorkedHoursByMonth() {
+        // Arrange
+        String registration = "202312345";
+        Integer month = 7;
+        Integer year = 2026;
+
+        when(monitoringSessionRepository.sumMonitoringSecondsByMonth(
+                registration, month, year))
+                .thenReturn(9000L); // 2h30min
+
+        // Act
+        Duration result = monitoringSessionAdapter.getWorkedHoursByMonth(
+                registration, month, year);
+
+        // Assert
+        assertEquals(Duration.ofHours(2).plusMinutes(30), result);
+
+        verify(monitoringSessionRepository)
+                .sumMonitoringSecondsByMonth(registration, month, year);
+    }
+
+
+    @Test
+    void shouldReturnZeroDurationWhenNoWorkedHours() {
+        // Arrange
+        String registration = "202312345";
+        Integer month = 7;
+        Integer year = 2026;
+
+        when(monitoringSessionRepository.sumMonitoringSecondsByMonth(
+                registration, month, year))
+                .thenReturn(0L);
+
+        // Act
+        Duration result = monitoringSessionAdapter.getWorkedHoursByMonth(
+                registration, month, year);
+
+        // Assert
+        assertEquals(Duration.ZERO, result);
+
+        verify(monitoringSessionRepository)
+                .sumMonitoringSecondsByMonth(registration, month, year);
+    }
+
 }

@@ -14,6 +14,7 @@ import br.com.pj2.back.dataprovider.database.repository.MonitoringSessionReposit
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 
@@ -118,6 +119,11 @@ public class MonitoringSessionAdapter implements MonitoringSessionGateway {
         }
 
         return count;
+    }
+
+    public Duration getWorkedHoursByMonth(String registration, Integer month, Integer year) {
+        Long totalSeconds = monitoringSessionRepository.sumMonitoringSecondsByMonth(registration, month, year);
+        return Duration.ofSeconds(totalSeconds);
     }
 
 }

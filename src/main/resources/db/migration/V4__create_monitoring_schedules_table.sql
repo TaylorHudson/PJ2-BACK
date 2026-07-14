@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS monitoring_schedules (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     monitor_registration VARCHAR(255) NOT NULL,
     monitoring_id BIGINT NOT NULL,
     day_of_week VARCHAR(20),

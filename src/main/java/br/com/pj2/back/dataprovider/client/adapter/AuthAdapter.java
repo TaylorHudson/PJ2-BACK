@@ -44,7 +44,7 @@ public class AuthAdapter implements AuthGateway {
             throw new BadRequestException(ErrorCode.INVALID_STUDENT_REGISTRATION);
         }
 
-        if (!result.getSituation().equals("Matriculado")) {
+        if (!result.getSituation().equals("Matriculado") && !result.getSituation().equals("Vinculado")) {
             throw new BadRequestException(ErrorCode.INVALID_STUDENT_REGISTRATION);
         }
 

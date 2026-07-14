@@ -4,6 +4,6 @@ import java.io.File;
 
 public interface PdfGeneratorGateway {
 
-    File genaratePdf(String registration);
+    File generatePdf(String registration, Integer month, Integer year);
 
 }

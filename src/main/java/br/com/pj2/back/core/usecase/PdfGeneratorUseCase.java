@@ -14,9 +14,8 @@ public class PdfGeneratorUseCase {
     private final TokenGateway tokenGateway;
     private final PdfGeneratorGateway pdfGeneratorGateway;
 
-    public File execute(String authorizationHeader) {
+    public File execute(String authorizationHeader, Integer month, Integer year) {
         String registration = tokenGateway.extractSubjectFromAuthorization(authorizationHeader);
-        return pdfGeneratorGateway.genaratePdf(registration);
-
+        return pdfGeneratorGateway.generatePdf(registration, month, year);
     }
 }

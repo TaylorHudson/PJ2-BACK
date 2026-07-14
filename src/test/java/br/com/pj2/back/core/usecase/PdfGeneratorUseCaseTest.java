@@ -16,35 +16,62 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PdfGeneratorUseCaseTest {
+
     @Mock
     private TokenGateway tokenGateway;
+
     @Mock
     private PdfGeneratorGateway pdfGeneratorGateway;
+
     @InjectMocks
     private PdfGeneratorUseCase pdfGeneratorUseCase;
 
     @Test
     void shouldGeneratePdfWhenAuthorizationHeaderIsValid() {
+        // Arrange
         String authHeader = "Bearer token";
         String registration = "user123";
+        Integer month = 7;
+        Integer year = 2026;
         File expectedFile = mock(File.class);
 
-        when(tokenGateway.extractSubjectFromAuthorization(authHeader)).thenReturn(registration);
-        when(pdfGeneratorGateway.genaratePdf(registration)).thenReturn(expectedFile);
+        when(tokenGateway.extractSubjectFromAuthorization(authHeader))
+                .thenReturn(registration);
 
-        File result = pdfGeneratorUseCase.execute(authHeader);
+        when(pdfGeneratorGateway.generatePdf(registration, month, year))
+                .thenReturn(expectedFile);
 
+        // Act
+        File result = pdfGeneratorUseCase.execute(authHeader, month, year);
+
+        // Assert
         assertEquals(expectedFile, result);
-        verify(tokenGateway).extractSubjectFromAuthorization(authHeader);
-        verify(pdfGeneratorGateway).genaratePdf(registration);
+
+        verify(tokenGateway)
+                .extractSubjectFromAuthorization(authHeader);
+
+        verify(pdfGeneratorGateway)
+                .generatePdf(registration, month, year);
     }
 
     @Test
     void shouldThrowExceptionWhenAuthorizationHeaderIsInvalid() {
-        when(tokenGateway.extractSubjectFromAuthorization(null)).thenThrow(new RuntimeException("Invalid header"));
+        // Arrange
+        Integer month = 7;
+        Integer year = 2026;
 
-        assertThrows(RuntimeException.class, () -> pdfGeneratorUseCase.execute(null));
-        verify(tokenGateway).extractSubjectFromAuthorization(null);
+        when(tokenGateway.extractSubjectFromAuthorization(null))
+                .thenThrow(new RuntimeException("Invalid header"));
+
+        // Act / Assert
+        assertThrows(
+                RuntimeException.class,
+                () -> pdfGeneratorUseCase.execute(null, month, year)
+        );
+
+        verify(tokenGateway)
+                .extractSubjectFromAuthorization(null);
+
         verifyNoInteractions(pdfGeneratorGateway);
     }
 

@@ -22,20 +22,22 @@ import org.springframework.stereotype.Service;
 import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
 public class PdfGeneratorAdapter implements PdfGeneratorGateway {
 
-    private final StudentAdapter studentAdapter;
+    private final MonitoringSessionAdapter monitoringSessionAdapter;
 
     private final static int HORAS_MENSAIS = 40;
 
 
     @Override
-    public File genaratePdf(String registration) {
+    public File generatePdf(String registration, Integer month, Integer year) {
         try {
-            int horasCumpridas = studentAdapter.findByRegistration(registration).getMissingWeeklyWorkload();
+            Duration workedHoursByMonth = monitoringSessionAdapter.getWorkedHoursByMonth(registration, month, year);
+            long workedHours = workedHoursByMonth.toHours();
 
             Document doc = new Document(PageSize.A4, 50, 50, 50, 50);
             File pdfFile = File.createTempFile("declaracao_monitoria", ".pdf");
@@ -62,7 +64,7 @@ public class PdfGeneratorAdapter implements PdfGeneratorGateway {
             paragraph.add("Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas (CST em ADS),\n");
             paragraph.add("orientador do monitor __________________________________________________, atesto\n");
 
-            if (horasCumpridas == 0) {
+            if (workedHours == 0) {
                 paragraph.add("que o mesmo, durante o mês de _______________________ do ano de __________, cumpriu,\n");
             } else {
                 paragraph.add("que o mesmo, durante o mês de _______________________ do ano de __________, não cumpriu,\n");
@@ -71,10 +73,13 @@ public class PdfGeneratorAdapter implements PdfGeneratorGateway {
             paragraph.add("semanalmente, 10 horas de atividades de apoio ao ensino, conforme previsto no Edital nº\n");
             paragraph.add("________, publicado em ________ de ________ de ________, item ____.\n\n");
 
-            paragraph.add("Horas totais cumpridas no mês: " + (horasCumpridas == 0 ? 40 : HORAS_MENSAIS - horasCumpridas) + " horas\n\n");
+            paragraph.add(String.format("Horas totais cumpridas no mês: %dh %02dmin%n%n",
+                    workedHoursByMonth.toHours(),
+                    workedHoursByMonth.toMinutesPart()
+            ));
             doc.add(paragraph);
 
-            if (horasCumpridas < 40) {
+            if (workedHours < 40) {
                 Paragraph justificativa = new Paragraph("Justificativa (caso não tenha cumprido as 40 horas mensais):\n\n", font);
                 doc.add(justificativa);
 
